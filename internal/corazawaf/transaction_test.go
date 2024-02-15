@@ -23,6 +23,7 @@ import (
 	"github.com/corazawaf/coraza/v3/internal/corazarules"
 	"github.com/corazawaf/coraza/v3/internal/environment"
 	utils "github.com/corazawaf/coraza/v3/internal/strings"
+	regexp "github.com/wasilibs/go-re2"
 	"github.com/corazawaf/coraza/v3/types"
 	"github.com/corazawaf/coraza/v3/types/variables"
 )
