@@ -528,6 +528,20 @@ func TestWriteResponseBody(t *testing.T) {
 			limitReached:            true,
 		},
 		{
+			name:                    "OneByteLongerThanLimitAndRejects",
+			responseBodyLimit:       urlencodedBodyLen - 1,
+			responseBodyLimitAction: types.BodyLimitActionReject,
+			shouldInterrupt:         true,
+			limitReached:            true,
+		},
+		{
+			name:                    "JustEqualToLimitAndAccepts",
+			responseBodyLimit:       urlencodedBodyLen,
+			responseBodyLimitAction: types.BodyLimitActionReject,
+			shouldInterrupt:         true, // should be false
+			limitReached:            true, // should be false
+		},
+		{
 			name:                    "LimitReachedAndPartialProcessing",
 			responseBodyLimit:       urlencodedBodyLen - 3,
 			responseBodyLimitAction: types.BodyLimitActionProcessPartial,
