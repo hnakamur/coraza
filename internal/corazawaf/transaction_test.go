@@ -1086,12 +1086,81 @@ func TestTxVariables(t *testing.T) {
 	}
 }
 
+func TestTxVariablesDifferentCase(t *testing.T) {
+	tx := makeTransaction(t)
+	rv := ruleVariableParams{
+		Variable: variables.RequestHeaders,
+		KeyStr:   "(?i)hO.*",
+		KeyRx:    regexp.MustCompile("(?i)hO.*"),
+	}
+	if len(tx.GetField(rv)) != 1 || tx.GetField(rv)[0].Value() != "www.test.com:80" {
+		t.Fatalf("failed to match rule variable REQUEST_HEADERS:host, %d matches, %v", len(tx.GetField(rv)), tx.GetField(rv))
+	}
+	rv.Count = true
+	if len(tx.GetField(rv)) == 0 || tx.GetField(rv)[0].Value() != "1" {
+		t.Fatalf("failed to get count for regexp variable")
+	}
+	// now nil key
+	rv.KeyRx = nil
+	if len(tx.GetField(rv)) == 0 {
+		t.Fatal("failed to match rule variable REQUEST_HEADERS with nil key")
+	}
+	rv.KeyStr = ""
+	f := tx.GetField(rv)
+	if len(f) == 0 {
+		t.Fatal("failed to count variable REQUEST_HEADERS ")
+	}
+	count, err := strconv.Atoi(f[0].Value())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 5 {
+		t.Fatalf("failed to match rule variable REQUEST_HEADERS with count, %v", rv)
+	}
+	if err := tx.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestTxVariablesExceptions(t *testing.T) {
 	tx := makeTransaction(t)
 	rv := ruleVariableParams{
 		Variable: variables.RequestHeaders,
 		KeyStr:   "ho.*",
 		KeyRx:    regexp.MustCompile("ho.*"),
+		Exceptions: []ruleVariableException{
+			{KeyStr: "host"},
+		},
+	}
+	fields := tx.GetField(rv)
+	if len(fields) != 0 {
+		t.Fatalf("REQUEST_HEADERS:host should not match, got %d matches, %v", len(fields), fields)
+	}
+	rv.Exceptions = nil
+	fields = tx.GetField(rv)
+	if len(fields) != 1 || fields[0].Value() != "www.test.com:80" {
+		t.Fatalf("failed to match rule variable REQUEST_HEADERS:host, %d matches, %v", len(fields), fields)
+	}
+	rv.Exceptions = []ruleVariableException{
+		{
+			KeyRx: regexp.MustCompile("ho.*"),
+		},
+	}
+	fields = tx.GetField(rv)
+	if len(fields) != 0 {
+		t.Fatalf("REQUEST_HEADERS:host should not match, got %d matches, %v", len(fields), fields)
+	}
+	if err := tx.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTxVariablesExceptionsDifferentCase(t *testing.T) {
+	tx := makeTransaction(t)
+	rv := ruleVariableParams{
+		Variable: variables.RequestHeaders,
+		KeyStr:   "(?i)hO.*",
+		KeyRx:    regexp.MustCompile("(?i)hO.*"),
 		Exceptions: []ruleVariableException{
 			{KeyStr: "host"},
 		},

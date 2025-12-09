@@ -472,7 +472,18 @@ func (r *Rule) AddAction(name string, action plugintypes.Action) error {
 // otherwise it will return false and the same key.
 func hasRegex(key string) (bool, string) {
 	if len(key) > 2 && key[0] == '/' && key[len(key)-1] == '/' {
-		return true, key[1 : len(key)-1]
+		rx := key[1 : len(key)-1]
+
+		// NOTE: We always perform regex in a case-insensitive manner,
+		// regardless of the variable's case-sensitivity setting.
+		// This is necessary to maintain alignment with ModSecurity's behavior:
+		// https://github.com/owasp-modsecurity/ModSecurity/issues/2296
+		// https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/test-cases/regression/issue-2296.json
+		const ignoreCasePattern = "(?i)"
+		if !strings.HasPrefix(rx, ignoreCasePattern) {
+			rx = ignoreCasePattern + rx
+		}
+		return true, rx
 	}
 	return false, key
 }

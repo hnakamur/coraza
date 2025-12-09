@@ -271,11 +271,19 @@ func TestRuleNegativeVariables(t *testing.T) {
 		t.Errorf("got %d exceptions", len(rule.variables[0].Exceptions))
 	}
 
+	if err := rule.AddVariableNegation(variables.RequestURI, "/test2.*/"); err != nil {
+		t.Error(err)
+	}
+
+	if len(rule.variables[0].Exceptions) != 2 || rule.variables[0].Exceptions[1].KeyRx.String() != "(?i)test2.*" {
+		t.Errorf("got %d exceptions", len(rule.variables[0].Exceptions))
+	}
+
 	if err := rule.AddVariable(variables.RequestURI, "/test.*/", false); err != nil {
 		t.Error(err)
 	}
 
-	if rule.variables[1].KeyRx == nil || rule.variables[1].KeyRx.String() != "test.*" {
+	if rule.variables[1].KeyRx == nil || rule.variables[1].KeyRx.String() != "(?i)test.*" {
 		t.Error("variable regex cannot be nil")
 	}
 }
@@ -287,12 +295,12 @@ func TestRuleNegativeVariablesEmtpyRule(t *testing.T) {
 	}
 }
 
-func TestVariablesRxAreCaseSensitive(t *testing.T) {
+func TestVariablesRxAreCaseInsensitive(t *testing.T) {
 	rule := NewRule()
 	if err := rule.AddVariable(variables.ArgsGet, "/Som3ThinG/", false); err != nil {
 		t.Error(err)
 	}
-	if rule.variables[0].KeyRx.String() != "Som3ThinG" {
+	if rule.variables[0].KeyRx.String() != "(?i)Som3ThinG" {
 		t.Error("variable key is not case insensitive")
 	}
 }
