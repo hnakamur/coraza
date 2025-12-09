@@ -13,7 +13,7 @@ import (
 
 func TestCaseSensitiveArgsVariableKeys(t *testing.T) {
 	rule := NewRule()
-	if err := rule.AddVariable(variables.ArgsGet, "Som3ThinG", false); err != nil {
+	if err := rule.AddVariable(variables.ArgsGet, "Som3ThinG", false, false); err != nil {
 		t.Error(err)
 	}
 	if rule.variables[0].KeyStr != "Som3ThinG" {

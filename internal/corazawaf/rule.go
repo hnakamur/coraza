@@ -470,7 +470,7 @@ func (r *Rule) AddAction(name string, action plugintypes.Action) error {
 // hasRegex checks the received key to see if it is between forward slashes.
 // if it is, it will return true and the content of the regular expression inside the slashes.
 // otherwise it will return false and the same key.
-func hasRegex(key string) (bool, string) {
+func hasRegex(key string, caseInsensitive bool) (bool, string) {
 	if len(key) > 2 && key[0] == '/' && key[len(key)-1] == '/' {
 		rx := key[1 : len(key)-1]
 
@@ -480,7 +480,7 @@ func hasRegex(key string) (bool, string) {
 		// https://github.com/owasp-modsecurity/ModSecurity/issues/2296
 		// https://github.com/owasp-modsecurity/ModSecurity/blob/v3.0.14/test/test-cases/regression/issue-2296.json
 		const ignoreCasePattern = "(?i)"
-		if !strings.HasPrefix(rx, ignoreCasePattern) {
+		if caseInsensitive && !strings.HasPrefix(rx, ignoreCasePattern) {
 			rx = ignoreCasePattern + rx
 		}
 		return true, rx
@@ -520,12 +520,12 @@ func newRuleVariableParams(v variables.RuleVariable, key string, re *regexp.Rege
 // The key can be a regexp.Regexp, a string or nil, in case of regexp
 // it will be used to match the variable, in case of string it will
 // be a fixed match, in case of nil it will match everything
-func (r *Rule) AddVariable(v variables.RuleVariable, key string, iscount bool) error {
+func (r *Rule) AddVariable(v variables.RuleVariable, key string, iscount, usesCaseInsensitiveRegex bool) error {
 	if r == nil {
 		return fmt.Errorf("cannot add a variable to an undefined rule")
 	}
 	var re *regexp.Regexp
-	if isRegex, rx := hasRegex(key); isRegex {
+	if isRegex, rx := hasRegex(key, usesCaseInsensitiveRegex); isRegex {
 		if vare, err := memoize.Do(rx, func() (any, error) { return regexp.Compile(rx) }); err != nil {
 			return err
 		} else {
@@ -567,9 +567,9 @@ func needToSplitConcatenatedVariable(v variables.RuleVariable, ve variables.Rule
 // OK: SecRule ARGS|!ARGS:id "..."
 // OK: SecRule !ARGS:id "..."
 // ERROR: SecRule !ARGS: "..."
-func (r *Rule) AddVariableNegation(v variables.RuleVariable, key string) error {
+func (r *Rule) AddVariableNegation(v variables.RuleVariable, key string, usesCaseInsensitiveRegex bool) error {
 	var re *regexp.Regexp
-	if isRegex, rx := hasRegex(key); isRegex {
+	if isRegex, rx := hasRegex(key, usesCaseInsensitiveRegex); isRegex {
 		if vare, err := memoize.Do(rx, func() (any, error) { return regexp.Compile(rx) }); err != nil {
 			return err
 		} else {

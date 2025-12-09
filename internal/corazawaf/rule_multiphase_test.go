@@ -61,7 +61,7 @@ func TestRuleNegativeVariablesMulti(t *testing.T) {
 		t.Error("invalid key type for variables")
 	}
 
-	if err := rule.AddVariableNegation(variables.Args, "test"); err != nil {
+	if err := rule.AddVariableNegation(variables.Args, "test", false); err != nil {
 		t.Error(err)
 	}
 
@@ -91,7 +91,7 @@ func TestRuleNegativeVariablesMulti(t *testing.T) {
 	// [1] ArgsPost name (2 exceptions)
 	// [2] ArgsGet regex (1 exception)
 	// [3] ArgsPost regex (1 exception)
-	if err := rule.AddVariableNegation(variables.Args, "test2"); err != nil {
+	if err := rule.AddVariableNegation(variables.Args, "test2", false); err != nil {
 		t.Error(err)
 	}
 

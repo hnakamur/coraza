@@ -302,7 +302,11 @@ func TestParseRule(t *testing.T) {
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
+			waf := corazawaf.NewWAF()
 			rp := RuleParser{
+				options: RuleOptions{
+					WAF: waf,
+				},
 				rule: corazawaf.NewRule(),
 			}
 			if err := rp.ParseVariables(tt.vars); err != nil {

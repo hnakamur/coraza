@@ -44,6 +44,7 @@ func NewWAF(config WAFConfig) (WAF, error) {
 		waf.Logger = c.debugLogger
 	}
 
+	waf.UsesCaseInsensitiveVarKeyRegex = c.usesCaseInsensitiveVarKeyRegex
 	parser := seclang.NewParser(waf)
 
 	if c.fsRoot != nil {

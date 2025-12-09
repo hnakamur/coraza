@@ -22,7 +22,7 @@ func TestMatchEvaluate(t *testing.T) {
 	r.LogData, _ = macro.NewMacro("Data Message")
 	r.ID_ = 1
 	r.LogID_ = "1"
-	if err := r.AddVariable(variables.ArgsGet, "", false); err != nil {
+	if err := r.AddVariable(variables.ArgsGet, "", false, false); err != nil {
 		t.Error(err)
 	}
 	dummyEqOp := &dummyEqOperator{}
@@ -46,7 +46,7 @@ func TestNoMatchEvaluate(t *testing.T) {
 	r := NewRule()
 	r.ID_ = 1
 	r.LogID_ = "1"
-	if err := r.AddVariable(variables.ArgsGet, "", false); err != nil {
+	if err := r.AddVariable(variables.ArgsGet, "", false, false); err != nil {
 		t.Error(err)
 	}
 	dummyEqOp := &dummyEqOperator{}
@@ -92,7 +92,7 @@ func TestNoMatchEvaluateBecauseOfException(t *testing.T) {
 			r.LogData, _ = macro.NewMacro("Data Message")
 			r.ID_ = 1
 			r.LogID_ = "1"
-			if err := r.AddVariable(tc.variable, "", false); err != nil {
+			if err := r.AddVariable(tc.variable, "", false, false); err != nil {
 				t.Error(err)
 			}
 			dummyEqOp := &dummyEqOperator{}
@@ -253,7 +253,7 @@ func TestSecActionMessagePropagationInMatchData(t *testing.T) {
 
 func TestRuleNegativeVariables(t *testing.T) {
 	rule := NewRule()
-	if err := rule.AddVariable(variables.RequestURI, "", false); err != nil {
+	if err := rule.AddVariable(variables.RequestURI, "", false, false); err != nil {
 		t.Error(err)
 	}
 	if rule.variables[0].Variable != variables.RequestURI {
@@ -263,7 +263,7 @@ func TestRuleNegativeVariables(t *testing.T) {
 		t.Error("invalid key type for variable")
 	}
 
-	if err := rule.AddVariableNegation(variables.RequestURI, "test"); err != nil {
+	if err := rule.AddVariableNegation(variables.RequestURI, "test", false); err != nil {
 		t.Error(err)
 	}
 
@@ -271,33 +271,56 @@ func TestRuleNegativeVariables(t *testing.T) {
 		t.Errorf("got %d exceptions", len(rule.variables[0].Exceptions))
 	}
 
-	if err := rule.AddVariableNegation(variables.RequestURI, "/test2.*/"); err != nil {
+	if err := rule.AddVariableNegation(variables.RequestURI, "/test2.*/", false); err != nil {
 		t.Error(err)
 	}
-
-	if len(rule.variables[0].Exceptions) != 2 || rule.variables[0].Exceptions[1].KeyRx.String() != "(?i)test2.*" {
+	if len(rule.variables[0].Exceptions) != 2 || rule.variables[0].Exceptions[1].KeyRx.String() != "test2.*" {
 		t.Errorf("got %d exceptions", len(rule.variables[0].Exceptions))
 	}
 
-	if err := rule.AddVariable(variables.RequestURI, "/test.*/", false); err != nil {
+	if err := rule.AddVariableNegation(variables.RequestURI, "/test3.*/", true); err != nil {
 		t.Error(err)
 	}
 
-	if rule.variables[1].KeyRx == nil || rule.variables[1].KeyRx.String() != "(?i)test.*" {
+	if len(rule.variables[0].Exceptions) != 3 || rule.variables[0].Exceptions[2].KeyRx.String() != "(?i)test3.*" {
+		t.Errorf("got %d exceptions", len(rule.variables[0].Exceptions))
+	}
+
+	if err := rule.AddVariable(variables.RequestURI, "/test.*/", false, false); err != nil {
+		t.Error(err)
+	}
+	if rule.variables[1].KeyRx == nil || rule.variables[1].KeyRx.String() != "test.*" {
+		t.Error("variable regex cannot be nil")
+	}
+
+	if err := rule.AddVariable(variables.RequestURI, "/test2.*/", false, true); err != nil {
+		t.Error(err)
+	}
+	if rule.variables[2].KeyRx == nil || rule.variables[2].KeyRx.String() != "(?i)test2.*" {
 		t.Error("variable regex cannot be nil")
 	}
 }
 
 func TestRuleNegativeVariablesEmtpyRule(t *testing.T) {
 	var rule *Rule
-	if err := rule.AddVariableNegation(variables.ArgsGet, "test"); err == nil {
+	if err := rule.AddVariableNegation(variables.ArgsGet, "test", false); err == nil {
 		t.Error("Expected error, calling AddVariableNegation for an undefined rule")
+	}
+}
+
+func TestVariablesRxAreCaseSensitive(t *testing.T) {
+	rule := NewRule()
+	if err := rule.AddVariable(variables.ArgsGet, "/Som3ThinG/", false, false); err != nil {
+		t.Error(err)
+	}
+	if rule.variables[0].KeyRx.String() != "Som3ThinG" {
+		t.Error("variable key is not case insensitive")
 	}
 }
 
 func TestVariablesRxAreCaseInsensitive(t *testing.T) {
 	rule := NewRule()
-	if err := rule.AddVariable(variables.ArgsGet, "/Som3ThinG/", false); err != nil {
+	if err := rule.AddVariable(variables.ArgsGet, "/Som3ThinG/", false, true); err != nil {
 		t.Error(err)
 	}
 	if rule.variables[0].KeyRx.String() != "(?i)Som3ThinG" {
@@ -599,10 +622,10 @@ func TestExpandMacroAfterWholeRuleEvaluation(t *testing.T) {
 	chainedRule.LogID_ = "1"
 	chainedRule.operator = nil
 
-	_ = r.AddVariable(variables.RequestURI, "", false)
+	_ = r.AddVariable(variables.RequestURI, "", false, false)
 	// ArgsGet is the variable matched by the inner rule. We expect that MATCHED_VAR_NAME
 	// will be ARGS_GET being the last variable matched
-	_ = chainedRule.AddVariable(variables.ArgsGet, "", false)
+	_ = chainedRule.AddVariable(variables.ArgsGet, "", false, false)
 	dummyEqOp := &dummyEqOperator{}
 	r.SetOperator(dummyEqOp, "@eq", "0")
 	chainedRule.SetOperator(dummyEqOp, "@eq", "0")

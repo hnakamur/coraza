@@ -95,10 +95,11 @@ func (rp *RuleParser) ParseVariables(vars string) error {
 				// we are inside a regex
 				key = fmt.Sprintf("/%s/", key)
 			}
+			usesCaseInsensitiveRegex := rp.options.WAF.UsesCaseInsensitiveVarKeyRegex
 			if isNegation {
-				err = rp.rule.AddVariableNegation(v, key)
+				err = rp.rule.AddVariableNegation(v, key, usesCaseInsensitiveRegex)
 			} else {
-				err = rp.rule.AddVariable(v, key, isCount)
+				err = rp.rule.AddVariable(v, key, isCount, usesCaseInsensitiveRegex)
 			}
 			if err != nil {
 				return err

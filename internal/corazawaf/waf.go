@@ -135,6 +135,8 @@ type WAF struct {
 
 	// Configures the maximum number of ARGS that will be accepted for processing.
 	ArgumentLimit int
+
+	UsesCaseInsensitiveVarKeyRegex bool
 }
 
 // Options is used to pass options to the WAF instance
